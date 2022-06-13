@@ -1,12 +1,5 @@
 const app = require("./app"); 
-const mongoose = require("mongoose");
 require("dotenv").config();
-
-const DB = process.env.MONGODB;
-
-mongoose.connect(DB).then(() => {
-    console.log("DB is connected")
-});
 
 
 
