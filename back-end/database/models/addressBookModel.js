@@ -6,6 +6,10 @@ const addressBookSchema = new Schema({
         required: [true, "each address should be unique"],
         unique: [true, "each address should be unique"]
     },
+    owner_timezone_offset: {
+        type: Number,
+        required: [true, "must have timezone offset"]
+    },
     address_book: [
         {
             address: {

@@ -8,6 +8,7 @@ if (dbUrl === undefined) throw Error('dotenv failed to load DB_URL');
 
 const dummyAddressBookData = {
     owner_address: "0x00000000000000000000000000000008",
+    owner_timezone_offset: 0,
     address_book: [
         {
             address: "0x00000000000000000000000000000009",
@@ -35,6 +36,30 @@ const sampleTransferData = {
         name: "Super USD Coin",
         underlyingAddress: "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"
     }
+}
+
+const sampleStreamData ={
+    date: 1655001405,
+	start: 1655001105,
+	end: 0,
+	sender: "0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721",
+	recipient: "0x3F047877e6613676d50Bf001b383682aDAeBE463",
+	networkId: "137",
+	txHashes: [
+        {
+            timestamp: 1655001105,
+            eventType: "flowStarted",
+            hash: "0x576a993da3982ef0123244f805c68bba55fc83d04dad42baa804224b60affa30"
+        }
+    ],
+	amountToken: "1.45678",
+	amountUSD: "1.45678",
+	token: {
+		id: "0xCAa7349CEA390F89641fe306D93591f87595dc1F",
+		symbol: "USDCx",
+		name: "Super USD Coin",
+		underlyingAddress: "0x2791bca1f2de4661ed88a30c99a7a9449aa84174"
+	}
 }
 
 
@@ -81,14 +106,16 @@ describe("db Communicator tests", () => {
         console.log("running test to add entry to existing address book...")
         await Communicator.addAddressToAddressBook(dummyAddressBookData.owner_address, newAddressBookRecord.address, newAddressBookRecord.name)
             .then(async (added) => {
-                const record = await Communicator.getAddressBookData(added.owner_address);
                 expect(added).to.true
                 assert.ok(true)
             })
             .catch((err) => {
                 console.log("ERROR:", err)
                 assert.ok(false);
-            })
+            });
+            const record = await Communicator.getAddressBookData(dummyAddressBookData.owner_address);
+            expect(record.address_book[0].address).to.equal(dummyAddressBookData.address_book[0].address)
+            
     })
     it("remove one from address book", async () => {
         console.log("adding first record...");
@@ -139,19 +166,53 @@ describe("db Communicator tests", () => {
             console.log("ERROR:", err );
             assert.ok(false)
         })
-
-            const transferRecord = await Communicator.getAccountData("0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721");
-            expect(transferRecord.transfers[0].date).to.equal(sampleTransferData.date);
-            expect(transferRecord.transfers[0].sender).to.equal(sampleTransferData.sender);
-            expect(transferRecord.transfers[0].recipient).to.equal(sampleTransferData.recipient);
-            expect(transferRecord.transfers[0].txHash).to.equal(sampleTransferData.txHash);
-            expect(transferRecord.transfers[0].networkId).to.equal(sampleTransferData.networkId);
-            expect(transferRecord.transfers[0].amountToken).to.equal(sampleTransferData.amountToken);
-            expect(transferRecord.transfers[0].amountUSD).to.equal(sampleTransferData.amountUSD);
-            expect(transferRecord.transfers[0].token.id).to.equal(sampleTransferData.token.id);
-            expect(transferRecord.transfers[0].token.symbol).to.equal(sampleTransferData.token.symbol);
-            expect(transferRecord.transfers[0].token.name).to.equal(sampleTransferData.token.name);
-            expect(transferRecord.transfers[0].token.underlyingAddress).to.equal(sampleTransferData.token.underlyingAddress);
+            const accountRecord = await Communicator.getAccountData("0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721");
+            expect(accountRecord.transfers[0].date).to.equal(sampleTransferData.date);
+            expect(accountRecord.transfers[0].sender).to.equal(sampleTransferData.sender);
+            expect(accountRecord.transfers[0].recipient).to.equal(sampleTransferData.recipient);
+            expect(accountRecord.transfers[0].txHash).to.equal(sampleTransferData.txHash);
+            expect(accountRecord.transfers[0].networkId).to.equal(sampleTransferData.networkId);
+            expect(accountRecord.transfers[0].amountToken).to.equal(sampleTransferData.amountToken);
+            expect(accountRecord.transfers[0].amountUSD).to.equal(sampleTransferData.amountUSD);
+            expect(accountRecord.transfers[0].token.id).to.equal(sampleTransferData.token.id);
+            expect(accountRecord.transfers[0].token.symbol).to.equal(sampleTransferData.token.symbol);
+            expect(accountRecord.transfers[0].token.name).to.equal(sampleTransferData.token.name);
+            expect(accountRecord.transfers[0].token.underlyingAddress).to.equal(sampleTransferData.token.underlyingAddress);
+    })
+    it("add stream to DB", async () => {
+        console.log("adding account to DB...");
+        await Communicator.addAccountToDB({
+            address: "0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721",
+            transfers: [],
+            streams: []
+        });
+        console.log("Adding a stream record to DB...");
+        await Communicator.addStreamToDB("0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721", sampleStreamData)
+            .then(async (added) => {
+                expect(added).to.true;
+                assert.ok(true)
+            })
+            .catch((err) => {
+                console.log("ERROR: ", err);
+                assert.ok(false);
+            });
+        
+        const accountRecord = await Communicator.getAccountData("0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721");
+        expect(accountRecord.streams[0].date).to.equal(sampleStreamData.date);
+        expect(accountRecord.streams[0].start).to.equal(sampleStreamData.start);
+        expect(accountRecord.streams[0].end).to.equal(sampleStreamData.end);
+        expect(accountRecord.streams[0].sender).to.equal(sampleStreamData.sender);
+        expect(accountRecord.streams[0].recipient).to.equal(sampleStreamData.recipient);
+        expect(accountRecord.streams[0].txHashes.timestamp).to.equal(sampleStreamData.txHashes.timestamp);
+        expect(accountRecord.streams[0].txHashes.eventType).to.equal(sampleStreamData.txHashes.eventType);
+        expect(accountRecord.streams[0].txHashes.hash).to.equal(sampleStreamData.txHashes.hash);
+        expect(accountRecord.streams[0].networkId).to.equal(sampleStreamData.networkId);
+        expect(accountRecord.streams[0].amountToken).to.equal(sampleStreamData.amountToken);
+        expect(accountRecord.streams[0].amountUSD).to.equal(sampleStreamData.amountUSD);
+        expect(accountRecord.streams[0].token.id).to.equal(sampleStreamData.token.id);
+        expect(accountRecord.streams[0].token.symbol).to.equal(sampleStreamData.token.symbol);
+        expect(accountRecord.streams[0].token.name).to.equal(sampleStreamData.token.name);
+        expect(accountRecord.streams[0].token.underlyingAddress).to.equal(sampleStreamData.token.underlyingAddress);
     })
 });
 

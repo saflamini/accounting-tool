@@ -111,6 +111,21 @@ const addTransferToDB = async (fromAccount, transferData) => {
     }
 }
 
+const addStreamToDB = async (fromAccount, streamData) => {
+    try {
+        let accountStreams;
+        const getDoc = await accountModel.findOne({address: fromAccount});
+        accountStreams = getDoc.streams;        
+        accountStreams.push(streamData);
+        const update = await accountModel.updateOne(
+            {address: fromAccount},
+            {streams: accountStreams}
+        );
+        return update.acknowledged;
+    } catch (err) {
+        console.log(err)
+    }
+}
 
 
 
@@ -124,6 +139,7 @@ const Communicator = {
     getAddressBookData,
     addAccountToDB,
     addTransferToDB,
+    addStreamToDB,
     getAccountData
 }
 

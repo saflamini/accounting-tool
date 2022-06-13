@@ -35,8 +35,7 @@ const accountSchema = new Schema({
                 }
             ],
 			amountToken: String,
-			amountFiat: String,
-			exchangeRate: String,
+			amountUSD: String,
 			token: {
 				id: String,
 				symbol: String,
