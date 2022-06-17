@@ -12,10 +12,10 @@ const accountSchema = new Schema({
 			amountToken: String,
 			amountUSD: String,
 			token: {
-				id: String,
+				id: String, // address of token, 'native' if native asset
 				symbol: String,
 				name: String,
-				underlyingAddress: String
+				underlyingAddress: String //address of underlying token if a super token, 0 if there isn't one in the case of erc20 or native assets
 			}
 		}
 	],

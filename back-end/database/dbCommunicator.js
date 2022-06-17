@@ -2,6 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const accountModel = require("./models/accountModel");
 const addressBookModel = require("./models/addressBookModel");
+const tokenModel = require("./models/tokenModel");
 
 //connect to database
 
@@ -127,6 +128,25 @@ const addStreamToDB = async (fromAccount, streamData) => {
     }
 }
 
+const addTokenToDB = async (tokenData) => {
+    try {
+        const doc = new tokenModel(tokenData);
+        await doc.save();
+        return true;
+    } catch (err) {
+        throw err;
+    }
+}
+
+const getTokenDataBySymbol = async (symbol) => {
+    try {
+        const record = await tokenModel.findOne({symbol: symbol});
+        return record;
+    } catch (err) {
+        console.log(err)
+    }
+}
+
 
 
 //account updates
@@ -137,9 +157,11 @@ const Communicator = {
     addAddressToAddressBook,
     removeAddressFromAddressBook,
     getAddressBookData,
+    getTokenDataBySymbol,
     addAccountToDB,
     addTransferToDB,
     addStreamToDB,
+    addTokenToDB,
     getAccountData
 }
 

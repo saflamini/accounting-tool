@@ -3,7 +3,7 @@ const mongoose = require("mongoose")
 const { expect, assert } = require("chai");
 const Communicator  = require("../database/dbCommunicator");
 
-const dbUrl = process.env.MONGODB;
+const dbUrl = process.env.DB_URL;
 if (dbUrl === undefined) throw Error('dotenv failed to load DB_URL');
 
 const dummyAddressBookData = {
@@ -18,7 +18,7 @@ const dummyAddressBookData = {
 }
 
 const newAddressBookRecord = {
-    address: "0xDCB45e4f6762C3D7C61a00e96Fb94ADb7Cf27721",
+    address: "0xDCB45e4f6762C3D7C6a1a00e96Fb94ADb7Cf27721",
     name: "Internal Account 3"
 }
 
@@ -62,6 +62,14 @@ const sampleStreamData ={
 	}
 }
 
+const sampleTokenData = {
+    address: "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+    symbol: "DAI",
+	superTokenAddress: "0x1305F6B6Df9Dc47159D12Eb7aC2804d4A33173c2",
+	decimals: "18",
+    networkId: "137"
+}
+
 
 //Called hooks which runs before something.
 before(async () => {
@@ -79,9 +87,12 @@ before(async () => {
 });
 
 beforeEach((done) => {
-    mongoose.connection.collections.addressbooks.drop(() => {
+   mongoose.connection.collections.addressbooks.drop();
+   mongoose.connection.collections.accountcollections.drop();
+   mongoose.connection.collections.tokencollections.drop(() => {
     done();
    });
+
 });
 
 describe("db Communicator tests", () => {
@@ -213,6 +224,24 @@ describe("db Communicator tests", () => {
         expect(accountRecord.streams[0].token.symbol).to.equal(sampleStreamData.token.symbol);
         expect(accountRecord.streams[0].token.name).to.equal(sampleStreamData.token.name);
         expect(accountRecord.streams[0].token.underlyingAddress).to.equal(sampleStreamData.token.underlyingAddress);
+    });
+    it("adds token to token DB", async () => {
+        console.log(sampleTokenData)
+        await Communicator.addTokenToDB(sampleTokenData)
+            .then(async (added) => {
+                expect(added).to.true;
+                assert.ok(true);
+            })
+            .catch((err) => {
+                console.log("ERROR: ", err);
+                assert.ok(false);
+            });
+        const tokenRecord = await Communicator.getTokenDataBySymbol("DAI");
+        expect(tokenRecord.address).to.equal(sampleTokenData.address);
+        expect(tokenRecord.symbol).to.equal(sampleTokenData.symbol);
+        expect(tokenRecord.superTokenAddress).to.equal(sampleTokenData.superTokenAddress);
+        expect(tokenRecord.decimals).to.equal(sampleTokenData.decimals);
+        expect(tokenRecord.networkId).to.equal(sampleTokenData.networkId);
     })
 });
 
